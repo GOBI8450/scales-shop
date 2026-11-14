@@ -3,13 +3,12 @@
    Shop names are real Israeli reptile / pet businesses used only as templates.
    Every description, product, price and review below is invented. */
 
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 const CATS = [
   { id: 'snakes',     he: 'נחשים',          icon: '🐍', img: 'img/ball-1.jpg',     animal: true },
   { id: 'geckos',     he: 'שממיות',         icon: '🦎', img: 'img/leopard-0.jpg',  animal: true },
   { id: 'lizards',    he: 'לטאות',          icon: '🐉', img: 'img/bearded-0.jpg',  animal: true },
-  { id: 'amphibians', he: 'דו־חיים',        icon: '🐸', img: 'img/whites-0.jpg',   animal: true },
   { id: 'inverts',    he: 'חסרי חוליות',    icon: '🕷️', img: '',                   animal: true },
   { id: 'food',       he: 'מזון',           icon: '🦗', img: 'img/crickets-0.jpg', animal: false },
   { id: 'terrariums', he: 'טרריומים',       icon: '🏠', img: '',                   animal: false },
@@ -31,8 +30,6 @@ const SPECIES = {
   bearded:    { he: 'דרקון מזוקן',         lat: 'Pogona vitticeps',         cat: 'lizards',    imgs: ['bearded-0', 'bearded-1', 'bearded-2'], price: [250, 1500],  weight: [15, 480],  morphs: ['נורמל', 'היפו', 'ציטרוס', 'לדרבק', 'רד', 'טרנסלוסנט'] },
   bluetongue: { he: 'סקינק כחול לשון',     lat: 'Tiliqua scincoides',       cat: 'lizards',    imgs: ['bluetongue-0', 'bluetongue-1'],        price: [1200, 3500], weight: [60, 550],  morphs: ['צפוני', 'אינדונזי', 'מראוקה'] },
   veiled:     { he: 'זיקית תימנית',        lat: 'Chamaeleo calyptratus',    cat: 'lizards',    imgs: ['veiled-0'],                            price: [250, 700],   weight: [10, 180],  morphs: ['נורמל', 'טרנסלוסנט'] },
-  pacman:     { he: 'צפרדע פקמן',          lat: 'Ceratophrys cranwelli',    cat: 'amphibians', imgs: ['pacman-0', 'pacman-1', 'pacman-2'],    price: [150, 600],   weight: [10, 250],  morphs: ['ירוק', 'אלבינו', 'סטרוברי', 'אפריקוט'] },
-  whites:     { he: 'צפרדע עץ אוסטרלית',   lat: 'Ranoidea caerulea',        cat: 'amphibians', imgs: ['whites-0', 'whites-1', 'whites-2'],    price: [150, 500],   weight: [8, 90],    morphs: ['ירוק', 'בלו', 'סנופלייק'] },
   tarantula:  { he: 'טרנטולה',             lat: 'Theraphosidae',            cat: 'inverts',    imgs: [], icon: '🕷️',                          price: [120, 700],   weight: [2, 40],    morphs: ['כילה רוז', 'ברכיים אדומות', 'קרלי הייר', 'גרין בוטל בלו'] },
   scorpion:   { he: 'עקרב קיסרי',          lat: 'Pandinus imperator',       cat: 'inverts',    imgs: [], icon: '🦂',                          price: [150, 400],   weight: [5, 30],    morphs: ['בוגר', 'צעיר'] },
   isopods:    { he: 'איזופודים (מושבה)',   lat: 'Isopoda',                  cat: 'inverts',    imgs: [], icon: '🪲',                          price: [40, 180],    weight: [1, 1],     morphs: ['דיירי קאו', 'אורנג׳', 'זברה', 'פנדה קינג'] },
@@ -41,7 +38,7 @@ const SPECIES = {
 /* Supplies sold by several shops under the same title, so prices can be compared. */
 const SUPPLIES = {
   food: [
-    { t: 'צרצרים בינוניים, קופסה של 50',          p: 22,  img: 'crickets-0', icon: '🦗', d: 'צרצרי בית בגודל בינוני, מתאימים לשממיות, לדרקונים צעירים ולצפרדעים.' },
+    { t: 'צרצרים בינוניים, קופסה של 50',          p: 22,  img: 'crickets-0', icon: '🦗', d: 'צרצרי בית בגודל בינוני, מתאימים לשממיות ולדרקונים צעירים.' },
     { t: 'צרצרים קטנים, קופסה של 100',            p: 25,  img: 'crickets-1', icon: '🦗', d: 'צרצרים קטנים לגורים ולבעלי חיים קטנים. מגיעים עם קרטון ביצים ומזון.' },
     { t: 'תולעי קמח, 100 גרם',                    p: 18,  icon: '🪱', d: 'תולעי קמח טריות. לשמור במקרר כדי להאט את הגלגול.' },
     { t: 'ג׳וקי דוביה בינוניים, 30 יחידות',       p: 35,  icon: '🪳', d: 'דוביה עשירים בחלבון, לא מטפסים על זכוכית ולא מרעישים.' },
@@ -50,7 +47,7 @@ const SUPPLIES = {
     { t: 'אבקת סידן עם D3, 100 גרם',              p: 42,  icon: '🧂', d: 'תוסף סידן לאיבוק מזון חי. לשימוש פעם־פעמיים בשבוע.' },
   ],
   terrariums: [
-    { t: 'טרריום זכוכית 45×45×60 ס״מ',            p: 520, icon: '🏠', d: 'טרריום אנכי עם דלתות קדמיות ורשת אוורור עליונה. מתאים לשממיות מטפסות ולצפרדעי עץ.' },
+    { t: 'טרריום זכוכית 45×45×60 ס״מ',            p: 520, icon: '🏠', d: 'טרריום אנכי עם דלתות קדמיות ורשת אוורור עליונה. מתאים לשממיות מטפסות.' },
     { t: 'טרריום זכוכית 60×45×45 ס״מ',            p: 560, icon: '🏠', d: 'טרריום אופקי עם דלתות קדמיות. מתאים לשממית נמרית או לנחש צעיר.' },
     { t: 'טרריום זכוכית 90×45×45 ס״מ',            p: 890, icon: '🏠', d: 'טרריום רחב לדרקון מזוקן צעיר או לנחש בינוני.' },
     { t: 'טרריום PVC 120×60×60 ס״מ',              p: 1650, icon: '📦', d: 'טרריום PVC מבודד ששומר חום ולחות. מתאים לדרקון מזוקן בוגר או לפיתון מלכותי.' },
@@ -80,21 +77,21 @@ const SHOP_TEMPLATES = [
   { slug: 'herpshop',        name: 'הרפ שופ',                en: 'HERP Shop',                  city: '',            region: '',                 icon: '🦎', color: '#c26a00', focus: ['geckos', 'lizards', 'gear'] },
   { slug: 'reptiles-center', name: 'המרכז הישראלי לזוחלים',  en: 'Israeli Center for Reptiles', city: '',           region: '',                 icon: '🐉', color: '#13795b', focus: ['lizards', 'snakes', 'heat', 'gear'] },
   { slug: 'zochalia',        name: 'זוחליה נחשייה',          en: 'Zochalia',                   city: 'בארות יצחק',  region: 'מרכז',             icon: '🐢', color: '#5b8c1a', focus: ['snakes', 'geckos', 'food'] },
-  { slug: 'animal-club',     name: 'אנימל קלאב',             en: 'Animal Club',                city: 'רמת הגולן',   region: 'צפון',             icon: '🌿', color: '#0e7490', focus: ['lizards', 'amphibians', 'gear'] },
-  { slug: 'pet-town',        name: 'פט טאון',                en: 'Pet Town',                   city: '',            region: '',                 icon: '🏠', color: '#2f6fb3', focus: ['terrariums', 'heat', 'gear', 'amphibians'] },
+  { slug: 'animal-club',     name: 'אנימל קלאב',             en: 'Animal Club',                city: 'רמת הגולן',   region: 'צפון',             icon: '🌿', color: '#0e7490', focus: ['lizards', 'food', 'gear'] },
+  { slug: 'pet-town',        name: 'פט טאון',                en: 'Pet Town',                   city: '',            region: '',                 icon: '🏠', color: '#2f6fb3', focus: ['terrariums', 'heat', 'gear', 'food'] },
   { slug: 'zoo-afula',       name: 'זו עפולה',               en: 'Zoo Afula',                  city: 'עפולה',       region: 'צפון',             icon: '🦎', color: '#d9480f', focus: ['terrariums', 'heat', 'geckos'] },
   { slug: 'chowchow',        name: 'צ׳או צ׳או',              en: 'Chow Chow',                  city: '',            region: '',                 icon: '🪵', color: '#b8325a', focus: ['gear', 'terrariums', 'food'] },
   { slug: 'petbest',         name: 'פטבסט',                  en: 'PetBest',                    city: '',            region: '',                 icon: '💡', color: '#7b4fb0', focus: ['terrariums', 'heat', 'gear'] },
   { slug: 'megapet',         name: 'מגה פט',                 en: 'MegaPet',                    city: '',            region: '',                 icon: '🏬', color: '#1c8c8c', focus: ['terrariums', 'food', 'gear'] },
   { slug: 'just4pet',        name: 'ג׳אסט פור פט',           en: 'Just4Pet',                   city: '',            region: '',                 icon: '🦗', color: '#8a6d1d', focus: ['food', 'gear', 'heat'] },
   { slug: 'meital-labs',     name: 'מיטל מעבדות',            en: 'Meital Labs',                city: '',            region: '',                 icon: '🪲', color: '#4e6b3a', focus: ['food', 'inverts'] },
-  { slug: 'zoo-center',      name: 'זו סנטר',                en: 'Zoo Center',                 city: 'תל אביב־יפו', region: 'מרכז',             icon: '🐸', color: '#2e7d32', focus: ['amphibians', 'geckos', 'gear'] },
+  { slug: 'zoo-center',      name: 'זו סנטר',                en: 'Zoo Center',                 city: 'תל אביב־יפו', region: 'מרכז',             icon: '🦎', color: '#2e7d32', focus: ['lizards', 'geckos', 'gear'] },
   { slug: 'petway',          name: 'פטוויי',                 en: 'Petway',                     city: '',            region: '',                 icon: '🌱', color: '#0e7490', focus: ['food', 'gear', 'heat'] },
   { slug: 'animal-house',    name: 'אנימל האוס',             en: 'Animal House',               city: 'כפר הנגיד',   region: 'שפלה',             icon: '🐉', color: '#c26a00', focus: ['lizards', 'terrariums', 'heat'] },
   { slug: 'safari-house',    name: 'בית הספארי ירושלים',     en: 'Safari House Jerusalem',     city: 'אמינדב',      region: 'ירושלים והסביבה',  icon: '🦂', color: '#8a6d1d', focus: ['inverts', 'snakes', 'gear'] },
   { slug: 'herp-hobby',      name: 'הרפ הובי שופ',           en: 'Herp Hobby Shop',            city: '',            region: '',                 icon: '🐍', color: '#13795b', focus: ['snakes', 'geckos', 'food'] },
   { slug: 'eranpets',        name: 'ערן וחיות אחרות',        en: 'Eran & Other Animals',       city: '',            region: '',                 icon: '🦎', color: '#d9480f', focus: ['geckos', 'terrariums', 'food'] },
-  { slug: 'cichlidon',       name: 'ציקלידון',               en: 'Cichlidon',                  city: '',            region: '',                 icon: '🐸', color: '#2f6fb3', focus: ['geckos', 'amphibians', 'gear'] },
+  { slug: 'cichlidon',       name: 'ציקלידון',               en: 'Cichlidon',                  city: '',            region: '',                 icon: '🦎', color: '#2f6fb3', focus: ['geckos', 'terrariums', 'gear'] },
   { slug: 'pet-point',       name: 'פט פוינט',               en: 'Pet Point',                  city: 'תל אביב־יפו', region: 'מרכז',             icon: '💡', color: '#b8325a', focus: ['food', 'heat', 'gear'] },
 ];
 
@@ -109,7 +106,6 @@ const FOCUS_TEXT = {
   snakes: 'נחשים מגידול בשבי',
   geckos: 'שממיות לכל רמה',
   lizards: 'לטאות, דרקונים וזיקיות',
-  amphibians: 'צפרדעים ודו־חיים',
   inverts: 'טרנטולות וחסרי חוליות',
   food: 'מזון חי וקפוא',
   terrariums: 'טרריומים בכל הגדלים',
