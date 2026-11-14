@@ -1,11 +1,11 @@
 {
   "name": "scales-shop",
-  "version": "0.6.0",
+  "version": "1.0.0",
   "private": true,
-  "description": "Scales: Israeli reptile marketplace demo (Hebrew, RTL, no backend)",
+  "description": "Scales: Hebrew RTL reptile marketplace demo for Israel (no backend)",
   "type": "module",
   "scripts": {
-    "start": "npx --yes serve@14.2.4 -l 8080 .",
-    "build": "node tools/build.mjs"
+    "start": "node tools/serve.mjs",
+    "accounts": "node tools/accounts.mjs"
   }
 }
