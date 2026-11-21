@@ -449,30 +449,21 @@ function footer() {
    Views
    ========================================================= */
 function viewHome() {
-  const newest = [...db.products].sort((a, b) => b.createdAt - a.createdAt).slice(0, 8);
-  const animals = db.products.filter(p => p.kind === "animal").sort((a, b) => (b.image ? 1 : 0) - (a.image ? 1 : 0) || b.createdAt - a.createdAt).slice(0, 8);
-  const best = [...db.products].sort(SORTS.best[1]).filter((p, i, a) => a.findIndex(x => x.title === p.title) === i).slice(0, 8); // one card per product type
+  const newest = [...db.products].sort((a, b) => b.createdAt - a.createdAt).slice(0, 10);
+  const animals = db.products.filter(p => p.kind === "animal").sort((a, b) => (b.image ? 1 : 0) - (a.image ? 1 : 0) || b.createdAt - a.createdAt).slice(0, 10);
+  const best = [...db.products].sort(SORTS.best[1]).filter((p, i, a) => a.findIndex(x => x.title === p.title) === i).slice(0, 10); // one card per product type
   const ordered = shopOrder();
-  const tiles = ["ball", "crested", "bearded"].map(k => db.products.filter(p => p.kind === "animal" && p.image && p.image.includes("/" + k + "-")).sort(SORTS.best[1])[0]).filter(Boolean);
   return `
-  <section class="hero">
-    <div class="hero-text">
-      <span class="eyebrow">${icon("leaf")} השוק של קהילת הזוחלים בישראל</span>
-      <h1>מוצאים את <em>הזוחל הבא</em> שלכם, בקלות.</h1>
-      <p>חנויות ומגדלים פרטיים מכל הארץ באתר אחד. משווים מחירים, רואים מי המוכר ומזמינים עם משלוח אחד לכל מוכר.</p>
-      <form class="hero-search" id="heroSearch" role="search">
-        <input id="hQ" type="search" placeholder="שממית נמרית, פיתון, נורת UVB…" aria-label="חיפוש באתר">
-        <button type="submit">${icon("search")} חיפוש</button>
-      </form>
-      <div class="quick"><span>חיפושים נפוצים:</span>${["שממית נמרית", "פיתון מלכותי", "חרדון מזוקן", "שממית מצויצת", "טרנטולה", "מזון חי"].map(q => `<a href="#search" data-act="quick" data-q="${q}">${q}</a>`).join("")}</div>
-      <div class="hero-stats">
-        <div>${db.shops.length}<small>חנויות ומגדלים</small></div>
-        <div>${db.products.filter(p => p.kind === "animal").length}<small>בעלי חיים למכירה</small></div>
-        <div>${db.products.length}<small>מוצרים באתר</small></div>
-      </div>
+  <section class="intro">
+    <div>
+      <h1>קונים ומוכרים זוחלים בישראל</h1>
+      <p>כל החנויות והמגדלים הפרטיים במקום אחד. מחפשים לפי מין, מורף, מחיר ואזור, ומזמינים ישירות מהמוכר.</p>
+      <div class="quick"><span>חיפושים נפוצים:</span>${["שממית נמרית", "פיתון מלכותי", "חרדון מזוקן", "שממית מצויצת", "טרנטולה", "מזון חי", "נורת UVB"].map(q => `<a href="#search" data-act="quick" data-q="${q}">${q}</a>`).join("")}</div>
     </div>
-    <div class="mosaic" aria-hidden="true">
-      ${tiles.map(p => `<a class="tile" href="#product-${p.id}" tabindex="-1"><img src="${p.image}" alt=""><span class="tag">${esc(p.title.split("(")[0].trim())} · <b>${money(p.price)}</b></span></a>`).join("")}
+    <div class="intro-stats">
+      <div>${db.products.filter(p => p.kind === "animal").length}<small>בעלי חיים</small></div>
+      <div>${db.products.filter(p => p.kind === "supply").length}<small>מוצרי ציוד</small></div>
+      <div>${db.shops.length}<small>מוכרים</small></div>
     </div>
   </section>
 
@@ -496,12 +487,6 @@ function viewHome() {
   <section aria-labelledby="h-best">
     <div class="section-head"><div><h2 id="h-best">הנמכרים ביותר</h2><p>מה שקונים הכי הרבה החודש בכל החנויות</p></div><a class="link-more" href="#search" data-act="quick" data-q="">לכל המוצרים ${icon("arrow")}</a></div>
     <div class="pgrid">${best.map(productCard).join("")}</div>
-  </section>
-
-  <section class="values" aria-label="למה Scales">
-    <div class="value"><span class="vi">${icon("scale")}</span><div><h3>משווים מחירים בקלות</h3><p>אותו בעל חיים מכמה חנויות ומגדלים, זה לצד זה.</p></div></div>
-    <div class="value"><span class="vi">${icon("truck")}</span><div><h3>משלוח אחד לכל מוכר</h3><p>קונים כמה מוצרים מאותו מוכר ומשלמים משלוח פעם אחת.</p></div></div>
-    <div class="value"><span class="vi">${icon("heart")}</span><div><h3>מגדלים שאוהבים את החיות</h3><p>כל מוכר מציג מין, גיל, מורף ורמת טיפול לכל בעל חיים.</p></div></div>
   </section>
 
   <section aria-labelledby="h-shops">
