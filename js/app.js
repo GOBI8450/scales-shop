@@ -57,8 +57,36 @@ function shopLogo(s, size) {
   const st = 'width:' + size + 'px;height:' + size + 'px;font-size:' + Math.round(size * 0.5) + 'px;background:' + esc(s.color);
   return '<span class="slogo" style="' + st + '">' + (s.logo ? '<img src="' + esc(s.logo) + '" alt="">' : esc(s.icon)) + '</span>';
 }
-function shopBanner(s) {
-  return s.banner ? 'background-image:url(\'' + esc(s.banner) + '\')' : 'background:linear-gradient(120deg,' + esc(s.color) + ',#17212e)';
+function shopBanner(s) { // uploaded banner, else a photo of the shop's best-selling animal (or listing), else a colour gradient
+  if (s.banner) return 'background-image:url(\'' + esc(s.banner) + '\')';
+  const mine = liveProducts().filter(p => p.shopId === s.id && p.images.length).sort(SORTS.best[1]);
+  const top = mine.find(p => catOf(p.cat).animal) || mine[0]; // an animal looks better than a box of crickets
+  return top ? 'background-image:linear-gradient(0deg,rgba(0,0,0,.25),rgba(0,0,0,0)),url(\'' + esc(top.images[0]) + '\');background-size:cover;background-position:center' : 'background:linear-gradient(120deg,' + esc(s.color) + ',#17212e)';
+}
+/* Verified sellers: big stores with a licence. Unverified sellers get no mark at all. */
+const vMark = (s, full) => s && s.verified ? '<span class="vmark' + (full ? ' full' : '') + '" title="מוכר מאומת: חנות עם רישיון"><i aria-hidden="true">✓</i>' + (full ? 'מוכר מאומת' : '<span class="sr">מוכר מאומת</span>') + '</span>' : '';
+const soldOf = p => +p.sold || 0;
+function isBest(p) { // one of the 3 best-selling listings of its shop
+  return soldOf(p) > 0 && liveProducts().filter(x => x.shopId === p.shopId).sort((a, b) => soldOf(b) - soldOf(a)).slice(0, 3).some(x => x.id === p.id);
+}
+const SORTS = {
+  best:  ['הנמכרים ביותר', (a, b) => soldOf(b) - soldOf(a) || b.created - a.created],
+  new:   ['החדשים ביותר', (a, b) => b.created - a.created],
+  cheap: ['מחיר: מהזול ליקר', (a, b) => a.price - b.price],
+  dear:  ['מחיר: מהיקר לזול', (a, b) => b.price - a.price],
+  group: ['לפי קבוצה (נחשים, שממיות, טרריומים…)', (a, b) => CATS.findIndex(c => c.id === a.cat) - CATS.findIndex(c => c.id === b.cat) || soldOf(b) - soldOf(a)],
+};
+const sortSelect = (cur, attr) => '<label class="pair"><span class="small">מיון:</span><select ' + attr + ' aria-label="מיון">' +
+  Object.entries(SORTS).map(([k, [label]]) => '<option value="' + k + '"' + (cur === k ? ' selected' : '') + '>' + label + '</option>').join('') + '</select></label>';
+function groupChips(items, cur, link) { // category "groups" with counts; link(catId) builds the URL
+  const n = {}; items.forEach(p => { n[p.cat] = (n[p.cat] || 0) + 1; });
+  const chip = (id, label, k) => '<a class="gchip' + ((cur || '') === id ? ' on' : '') + '" href="' + link(id) + '"' + ((cur || '') === id ? ' aria-current="true"' : '') + '>' + label + ' <span>' + k + '</span></a>';
+  return '<nav class="gchips" aria-label="קבוצות">' + chip('', 'הכול', items.length) + CATS.filter(c => n[c.id]).map(c => chip(c.id, c.icon + ' ' + c.he, n[c.id])).join('') + '</nav>';
+}
+function listing(list, sort) { // grid, or one grid per category when sorting by group
+  if (sort !== 'group' || !list.length) return grid(list);
+  return CATS.filter(c => list.some(p => p.cat === c.id)).map(c => { const l = list.filter(p => p.cat === c.id);
+    return '<h3 class="ghead">' + c.icon + ' ' + c.he + ' <span>' + l.length + '</span></h3>' + grid(l); }).join('');
 }
 const cartCount = () => db.cart.reduce((a, c) => a + c.qty, 0);
 const liveProducts = () => db.products.filter(p => p.status === 'active' && p.qty > 0);
@@ -157,19 +185,20 @@ function card(p) {
   return '<article class="card">' +
     '<a class="card-img" href="#/p/' + p.id + '"><img loading="lazy" src="' + esc(imgOf(p)) + '" alt="' + esc(p.title) + '">' +
     '<span class="card-tags">' + (p.sex ? '<span class="badge">' + SEX[p.sex] + '</span>' : '') + (sale ? '<span class="badge red">מבצע</span>' : '') +
-    (s.type === 'breeder' ? '<span class="badge blue">מגדל פרטי</span>' : '') + '</span></a>' +
+    (s.type === 'breeder' ? '<span class="badge blue">מגדל פרטי</span>' : '') + (isBest(p) ? '<span class="badge best">רב מכר</span>' : '') + '</span></a>' +
     '<button type="button" class="fav' + (fav ? ' on' : '') + '" data-act="fav" data-id="' + p.id + '" aria-pressed="' + !!fav + '" aria-label="שמירה במועדפים">♥</button>' +
     '<div class="card-body"><a class="card-title" href="#/p/' + p.id + '">' + esc(p.title) + '</a>' +
     '<div class="card-sub"><span' + (p.species ? ' class="ltr"' : '') + '>' + esc(sub) + '</span></div>' +
     '<div class="price' + (sale ? ' sale' : '') + '">' + money(p.price) + (sale ? '<s>' + money(p.oldPrice) + '</s>' : '') + '</div>' +
-    '<a class="card-shop" href="#/s/' + s.slug + '">' + shopLogo(s, 22) + '<span>' + esc(s.name) + (s.city ? ' · ' + esc(s.city) : '') + '</span></a>' +
+    (soldOf(p) ? '<div class="card-sold">נמכרו ' + soldOf(p) + '</div>' : '') +
+    '<a class="card-shop" href="#/s/' + s.slug + '">' + shopLogo(s, 22) + '<span>' + esc(s.name) + (s.city ? ' · ' + esc(s.city) : '') + '</span>' + vMark(s) + '</a>' +
     '</div></article>';
 }
 const grid = list => list.length ? '<div class="grid">' + list.map(card).join('') + '</div>' : '<div class="empty panel"><b>🔍</b>לא נמצאו מודעות מתאימות.</div>';
 function shopCard(s) {
   const n = liveProducts().filter(p => p.shopId === s.id).length;
   return '<a class="shop-card" href="#/s/' + s.slug + '"><div class="ban" style="' + shopBanner(s) + '"></div><div class="in">' + shopLogo(s, 52) +
-    '<h3>' + esc(s.name) + ' ' + (s.verified ? '<span class="badge green">מאומת</span>' : '') + '</h3>' +
+    '<h3>' + esc(s.name) + ' ' + vMark(s) + '</h3>' +
     '<div><span class="badge ' + (s.type === 'breeder' ? 'blue' : 'gold') + '">' + TYPE[s.type] + '</span> <span class="small mute">' + esc(s.city || 'משלוחים לכל הארץ') + '</span></div>' +
     '<div>' + ratingHtml(s.id) + '</div><div class="small mute">' + n + ' מודעות פעילות</div></div></a>';
 }
@@ -181,17 +210,19 @@ function viewHome() {
   const newest = animals.slice().sort((a, b) => b.created - a.created).slice(0, 10);
   const deals = live.filter(p => p.oldPrice > p.price).sort((a, b) => (b.oldPrice - b.price) / b.oldPrice - (a.oldPrice - a.price) / a.oldPrice).slice(0, 5);
   const breeders = live.filter(p => shopOf(p).type === 'breeder').slice(0, 5);
-  const top = db.shops.slice().sort((a, b) => ratingOf(b.id).avg - ratingOf(a.id).avg).slice(0, 4);
+  const top = db.shops.slice().sort((a, b) => (b.verified ? 1 : 0) - (a.verified ? 1 : 0) || ratingOf(b.id).avg - ratingOf(a.id).avg).slice(0, 4);
+  const best = live.slice().sort(SORTS.best[1]).filter((p, i, a) => a.findIndex(x => x.title === p.title) === i).slice(0, 10); // one card per product type
   const sec = (title, link, body) => '<div class="sec-head"><h2>' + title + '</h2>' + (link ? '<a href="' + link + '">לכל המודעות ←</a>' : '') + '</div>' + body;
   return { title: 'שוק הזוחלים של ישראל', html:
     '<section class="hero"><div class="hero-txt"><h1>כל מוכרי הזוחלים בישראל, במקום אחד</h1>' +
     '<p>חנויות ומגדלים פרטיים מציגים זה לצד זה. משווים מחירים, קוראים ביקורות וקונים ישירות מהמוכר.</p>' +
     '<div class="btns"><a class="btn buy" href="#/browse">לכל המודעות</a><a class="btn ghost" href="#/register?role=shop">פתיחת חנות בחינם</a></div>' +
     '<div class="stats"><div><b>' + db.shops.length + '</b><span>חנויות ומגדלים</span></div><div><b>' + live.length + '</b><span>מודעות פעילות</span></div><div><b>' + Object.keys(SPECIES).length + '</b><span>מינים</span></div></div></div>' +
-    '<div class="hero-img"><img src="img/crested-1.jpg" alt="שממית מצויצת על ענף"></div></section>' +
+    '<div class="hero-img"><img src="img/crested-01.jpg" alt="שממית מצויצת על ענף"></div></section>' +
     sec('קטגוריות', '', '<div class="cats">' + CATS.map(c => '<a class="cat" href="#/browse?cat=' + c.id + '"><div class="pic">' +
       (c.img ? '<img loading="lazy" src="' + c.img + '" alt="">' : c.icon) + '</div><b>' + c.he + '</b><small>' + live.filter(p => p.cat === c.id).length + ' מודעות</small></a>').join('') + '</div>') +
-    sec('חדשים באתר', '#/browse', grid(newest)) +
+    sec('הנמכרים ביותר', '#/browse?sort=best', grid(best)) +
+    sec('חדשים באתר', '#/browse?sort=new', grid(newest)) +
     (deals.length ? sec('מבצעים', '#/browse?sale=1', grid(deals)) : '') +
     (breeders.length ? sec('ממגדלים פרטיים', '#/browse?type=breeder', grid(breeders)) : '') +
     '<div class="sec-head"><h2>חנויות מובילות</h2><a href="#/shops">לכל החנויות ←</a></div><div class="shops">' + top.map(shopCard).join('') + '</div>' +
@@ -212,6 +243,7 @@ function filterProducts(q) {
   if (q.region) list = list.filter(p => shopOf(p).region === q.region);
   if (q.type) list = list.filter(p => shopOf(p).type === q.type);
   if (q.sale) list = list.filter(p => p.oldPrice > p.price);
+  if (q.ver) list = list.filter(p => shopOf(p).verified);
   if (q.q) {
     const words = q.q.trim().toLowerCase().split(/\s+/);
     list = list.filter(p => {
@@ -220,8 +252,7 @@ function filterProducts(q) {
       return words.every(w => hay.includes(w));
     });
   }
-  const sort = q.sort || 'new';
-  list.sort(sort === 'cheap' ? (a, b) => a.price - b.price : sort === 'dear' ? (a, b) => b.price - a.price : (a, b) => b.created - a.created);
+  list.sort((SORTS[q.sort] || SORTS.best)[1]);
   return list;
 }
 function viewBrowse(q) {
@@ -237,6 +268,7 @@ function viewBrowse(q) {
   if (q.region) chips.push(['region', q.region]);
   if (q.type) chips.push(['type', TYPE[q.type]]);
   if (q.sale) chips.push(['sale', 'מבצעים בלבד']);
+  if (q.ver) chips.push(['ver', 'מוכרים מאומתים בלבד']);
   if (q.min) chips.push(['min', 'מ־' + money(q.min)]);
   if (q.max) chips.push(['max', 'עד ' + money(q.max)]);
   return { title, html:
@@ -250,12 +282,14 @@ function viewBrowse(q) {
     '<label class="field"><span>אזור</span><select name="region">' + opt('', 'כל הארץ', q.region || '') + REGIONS.map(r => opt(r, r, q.region)).join('') + '</select></label>' +
     '<label class="field"><span>סוג מוכר</span><select name="type">' + opt('', 'כל המוכרים', q.type || '') + opt('shop', 'חנויות', q.type) + opt('breeder', 'מגדלים פרטיים', q.type) + '</select></label>' +
     '<label class="check"><input type="checkbox" name="sale" value="1"' + (q.sale ? ' checked' : '') + '> מבצעים בלבד</label>' +
+    '<label class="check"><input type="checkbox" name="ver" value="1"' + (q.ver ? ' checked' : '') + '> מוכרים מאומתים בלבד ' + vMark({ verified: true }) + '</label>' +
     '<input type="hidden" name="sort" value="' + esc(q.sort || '') + '">' +
     '<button class="btn primary">סינון</button><a class="btn" href="#/browse">ניקוי הכול</a></form></details>' +
     '<section><div class="toolbar"><div><h1 style="margin:0">' + esc(title) + '</h1><span class="mute">' + list.length + ' מודעות</span></div>' +
-    '<label class="pair"><span class="small">מיון:</span><select data-sort aria-label="מיון">' + opt('new', 'החדשים ביותר', q.sort || 'new') + opt('cheap', 'מחיר: מהזול ליקר', q.sort) + opt('dear', 'מחיר: מהיקר לזול', q.sort) + '</select></label></div>' +
+    sortSelect(q.sort || 'best', 'data-sort') + '</div>' +
+    groupChips(filterProducts(Object.assign({}, q, { cat: '', species: '' })), q.cat, c => { const o = Object.assign({}, q, { cat: c }); delete o.species; return href('/browse', o); }) +
     (chips.length ? '<div class="chips">' + chips.map(([k, l]) => '<a class="chip" href="' + drop(k) + '" aria-label="הסרת הסינון ' + esc(l) + '">' + esc(l) + ' ✕</a>').join('') + '</div>' : '') +
-    grid(list) + '</section></div>' };
+    listing(list, q.sort || 'best') + '</section></div>' };
 }
 
 /* ---------- product ---------- */
@@ -281,7 +315,8 @@ function viewProduct(id) {
     '<div class="actions">' + (sale ? '<span class="badge red">מבצע</span>' : '') + (cheapest ? '<span class="badge green">המחיר הזול באתר</span>' : '') +
     (s.type === 'breeder' ? '<span class="badge blue">מגדל פרטי</span>' : '') + (!available ? '<span class="badge">לא זמין</span>' : '') + '</div>' +
     '<table class="traits">' + row('קטגוריה', cat.he) + row('מין', sp ? sp.he : '') + row('מורף / צבע', esc(p.morph)) + row('זכר / נקבה', p.sex ? SEX[p.sex] : '') +
-    row('שנת לידה', p.birth || '') + row('משקל', p.weight ? p.weight + ' גרם' : '') + row('פורסם', fdate(p.created)) + '</table>' +
+    row('שנת לידה', p.birth || '') + row('משקל', p.weight ? p.weight + ' גרם' : '') + row('פורסם', fdate(p.created)) +
+    row('נמכרו', soldOf(p) ? soldOf(p) + (isBest(p) ? ' · רב מכר בחנות' : '') : '') + '</table>' +
     '<h3>תיאור</h3><p style="white-space:pre-line">' + esc(p.desc) + '</p></div>' +
     '<aside class="panel buybox"><div class="price' + (sale ? ' sale' : '') + '">' + money(p.price) + (sale ? '<s>' + money(p.oldPrice) + '</s>' : '') + '</div>' +
     '<div class="small ' + (available ? '' : 'mute') + '">' + (available ? (p.qty > 1 ? 'במלאי: ' + p.qty + ' יחידות' : 'יחידה אחרונה') : 'המודעה אינה זמינה כרגע') + '</div>' +
@@ -291,14 +326,14 @@ function viewProduct(id) {
         '<button type="button" class="btn primary block" data-act="buynow" data-id="' + p.id + '">קנייה עכשיו</button>' : '') +
     '<button type="button" class="btn block" data-act="fav" data-id="' + p.id + '">' + (me && me.favs.includes(p.id) ? '♥ שמור במועדפים' : '♡ שמירה במועדפים') + '</button>' +
     '<hr style="width:100%;border:0;border-top:1px solid var(--line)">' +
-    '<a class="seller-mini" href="#/s/' + s.slug + '">' + shopLogo(s, 46) + '<span><b>' + esc(s.name) + '</b><br>' + ratingHtml(s.id) + '</span></a>' +
+    '<a class="seller-mini" href="#/s/' + s.slug + '">' + shopLogo(s, 46) + '<span><b>' + esc(s.name) + '</b> ' + vMark(s) + '<br>' + ratingHtml(s.id) + '</span></a>' +
     (mine ? '' : '<form class="form" data-form="ask" data-id="' + p.id + '"><label class="field"><span>שאלה למוכר</span>' +
       '<textarea name="text" required maxlength="600" placeholder="למשל: אפשר לקבל תמונות של ההורים?"></textarea></label><button class="btn">שליחת הודעה</button></form>') +
     '</aside></div>' +
     (rivals.length > 1 ? '<div class="sec-head"><h2>השוואת מחירים: ' + esc(sp ? sp.he : p.title) + '</h2><span class="mute small">' + rivals.length + ' הצעות, מהזול ליקר</span></div>' +
       '<div class="tscroll"><table class="list"><thead><tr><th>מודעה</th><th>מוכר</th><th>אזור</th><th>מחיר</th><th></th></tr></thead><tbody>' +
       rivals.map(x => { const xs = shopOf(x); return '<tr' + (x.id === p.id ? ' class="me"' : '') + '><td>' + esc(x.title) + (x.sex ? ' <span class="small mute">' + SEX[x.sex] + '</span>' : '') + '</td>' +
-        '<td><a href="#/s/' + xs.slug + '">' + esc(xs.name) + '</a> <span class="badge ' + (xs.type === 'breeder' ? 'blue' : 'gold') + '">' + TYPE[xs.type] + '</span></td>' +
+        '<td><a href="#/s/' + xs.slug + '">' + esc(xs.name) + '</a> ' + vMark(xs) + ' <span class="badge ' + (xs.type === 'breeder' ? 'blue' : 'gold') + '">' + TYPE[xs.type] + '</span></td>' +
         '<td>' + esc(xs.city || 'כל הארץ') + '</td><td><b>' + money(x.price) + '</b></td><td>' + (x.id === p.id ? '<span class="small mute">המודעה הזו</span>' : '<a class="btn sm" href="#/p/' + x.id + '">לצפייה</a>') + '</td></tr>'; }).join('') +
       '</tbody></table></div>' : '') +
     (more.length ? '<div class="sec-head"><h2>עוד מ' + esc(s.name) + '</h2><a href="#/s/' + s.slug + '">לחנות ←</a></div>' + grid(more) : '') };
@@ -322,7 +357,10 @@ function viewShop(slug, q) {
   const s = db.shops.find(x => x.slug === slug);
   if (!s) return null;
   const tab = q.tab || 'products';
-  const items = liveProducts().filter(p => p.shopId === s.id).sort((a, b) => b.created - a.created);
+  const all = liveProducts().filter(p => p.shopId === s.id);
+  const sort = SORTS[q.sort] ? q.sort : 'best';
+  const items = all.filter(p => !q.cat || p.cat === q.cat).sort(SORTS[sort][1]);
+  const soldTotal = all.reduce((a, p) => a + soldOf(p), 0);
   const revs = db.reviews.filter(r => r.shopId === s.id).sort((a, b) => b.date - a.date);
   const mine = me && me.shopId === s.id;
   const t = (id, label) => '<a href="#/s/' + s.slug + '?tab=' + id + '"' + (tab === id ? ' class="on"' : '') + '>' + label + '</a>';
@@ -340,13 +378,16 @@ function viewShop(slug, q) {
       [s.pickup ? 'איסוף עצמי' + (s.city ? ' מ' + esc(s.city) : '') : '', s.delivery ? 'משלוח עד הבית: ' + money(s.shipPrice) : ''].filter(Boolean).join(' · ') + '</p>' +
       (s.policy ? '<h3>מדיניות</h3><p style="white-space:pre-line">' + esc(s.policy) + '</p>' : '') +
       (s.phone ? '<h3>טלפון</h3><p class="ltr">' + esc(s.phone) + '</p>' : '') + '<p class="small mute">באתר מאז ' + fdate(s.created) + '</p></div>';
-  } else body = grid(items);
+  } else body = '<div class="toolbar"><span class="mute">' + items.length + ' מודעות' + (sort === 'best' ? ', מהנמכרות ביותר' : '') + ' · ' + soldTotal + ' פריטים נמכרו בחנות</span>' +
+    sortSelect(sort, 'data-shopsort') + '</div>' +
+    groupChips(all, q.cat, c => href('/s/' + s.slug, { cat: c, sort: q.sort })) + listing(items, sort);
   return { title: s.name, html:
     '<div class="shop-ban" style="' + shopBanner(s) + '"></div><div class="shop-head">' + shopLogo(s, 96) +
-    '<div class="info"><h1>' + esc(s.name) + ' ' + (s.verified ? '<span class="badge green">מאומת</span>' : '') + '</h1>' +
+    '<div class="info"><h1>' + esc(s.name) + ' ' + vMark(s, true) + '</h1>' +
     '<div class="actions"><span class="badge ' + (s.type === 'breeder' ? 'blue' : 'gold') + '">' + TYPE[s.type] + '</span><span class="mute">📍 ' + esc(s.city || 'משלוחים לכל הארץ') + '</span><span>' + ratingHtml(s.id) + '</span></div></div>' +
     (mine ? '<a class="btn primary" href="#/dash/shop">עיצוב החנות</a>' : '') + '</div>' +
-    '<div class="tabs">' + t('products', 'מודעות (' + items.length + ')') + t('reviews', 'ביקורות (' + revs.length + ')') + t('about', 'על המוכר') + '</div>' + body };
+    (s.verified ? '<p class="note vnote">' + vMark(s) + ' <span><b>מוכר מאומת.</b> חנות עם רישיון עסק למכירת בעלי חיים, שנבדק על ידי צוות האתר.' + (s.en ? ' (בדמו הסימון להמחשה בלבד.)' : '') + '</span></p>' : '') +
+    '<div class="tabs">' + t('products', 'מודעות (' + all.length + ')') + t('reviews', 'ביקורות (' + revs.length + ')') + t('about', 'על המוכר') + '</div>' + body };
 }
 
 /* ---------- auth ---------- */
@@ -496,7 +537,7 @@ function viewAbout() {
     '<p><a class="btn primary" href="#/demo">לחשבונות לניסיון</a></p></div>' };
 }
 function viewCredits() {
-  return { title: 'קרדיט לתמונות', html: '<h1>קרדיט לתמונות</h1><p class="mute">התמונות באתר הן ברישיון חופשי מוויקישיתוף.</p>' +
+  return { title: 'קרדיט לתמונות', html: '<h1>קרדיט לתמונות</h1><p class="mute">התמונות באתר הן ברישיון חופשי מוויקישיתוף, כפי שצולמו. לכל מודעה לדוגמה יש תמונה משלה.</p>' +
     '<div class="tscroll"><table class="list"><thead><tr><th></th><th>קובץ</th><th>צלם</th><th>רישיון</th></tr></thead><tbody>' +
     CREDITS.map(c => '<tr><td><img class="mini" loading="lazy" src="' + esc(c.src) + '" alt=""></td><td><a class="ltr" href="' + esc(c.page) + '" target="_blank" rel="noopener">' + esc(c.title.replace(/^File:/, '')) + '</a></td>' +
       '<td><span class="ltr">' + esc(c.artist) + '</span></td><td><span class="ltr">' + esc(c.license) + '</span></td></tr>').join('') + '</tbody></table></div>' };
@@ -581,7 +622,7 @@ const FORMS = {
       db.orders.push({ id: uid('o'), num: '#' + (1000 + db.orders.length + 1), buyerId: me.id, shopId: g.shop.id, date: Date.now(), status: 'new', ship, shipPrice,
         items: g.lines.map(l => ({ pid: l.p.id, title: l.p.title, price: l.p.price, qty: l.qty })), total: g.sub + shipPrice,
         addr: { name: d.name.trim(), phone: d.phone.trim(), city: d.city.trim(), address: d.address.trim() } });
-      g.lines.forEach(l => { l.p.qty -= l.qty; if (l.p.qty <= 0) { l.p.qty = 0; l.p.status = 'sold'; } });
+      g.lines.forEach(l => { l.p.sold = soldOf(l.p) + l.qty; l.p.qty -= l.qty; if (l.p.qty <= 0) { l.p.qty = 0; l.p.status = 'sold'; } });
     });
     db.cart = []; save();
     toast('ההזמנה בוצעה. המוכרים קיבלו אותה.');
@@ -604,6 +645,7 @@ document.addEventListener('change', e => {
   const t = e.target;
   if (t.matches('[data-upload]')) return handleUpload(t);
   if (t.matches('[data-sort]')) { const q = parseHash().q; q.sort = t.value; return go('/browse', q); }
+  if (t.matches('[data-shopsort]')) { const { path, q } = parseHash(); q.sort = t.value; return go(path, q); }
   if (t.matches('[data-qty]')) {
     const c = db.cart.find(x => x.pid === t.dataset.qty);
     if (c) { c.qty = Math.max(1, Math.min(+t.value || 1, +t.max || 1)); save(); render(); }

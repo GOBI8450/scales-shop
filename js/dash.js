@@ -47,7 +47,7 @@ function refreshShopPreview() {
 function viewDash(tab, id) {
   if (me.role !== 'seller' || !myShop()) return { title: 'ניהול החנות', html: '<div class="empty panel"><b>🏪</b>לחשבון הזה אין חנות. <a href="#/register?role=shop">פתיחת חנות</a></div>' };
   const s = myShop();
-  const prods = db.products.filter(p => p.shopId === s.id).sort((a, b) => b.created - a.created);
+  const prods = db.products.filter(p => p.shopId === s.id).sort(SORTS.best[1]);
   const orders = db.orders.filter(o => o.shopId === s.id).sort((a, b) => b.date - a.date);
   const msgs = db.messages.filter(m => m.shopId === s.id).sort((a, b) => b.date - a.date);
   const newOrders = orders.filter(o => o.status === 'new').length, openMsgs = msgs.filter(m => !m.reply).length;
@@ -57,9 +57,9 @@ function viewDash(tab, id) {
   if (tab === 'products') {
     title = 'המודעות שלי';
     body = '<div class="toolbar"><h1 style="margin:0">המודעות שלי <span class="mute small">(' + prods.length + ')</span></h1><a class="btn primary" href="#/dash/new">+ מודעה חדשה</a></div>' +
-      (prods.length ? '<div class="tscroll"><table class="list"><thead><tr><th></th><th>מודעה</th><th>מחיר</th><th>מלאי</th><th>מצב</th><th>פעולות</th></tr></thead><tbody>' +
+      (prods.length ? '<div class="tscroll"><table class="list"><thead><tr><th></th><th>מודעה</th><th>מחיר</th><th>מלאי</th><th>נמכרו</th><th>מצב</th><th>פעולות</th></tr></thead><tbody>' +
         prods.map(p => '<tr><td><img class="mini" src="' + esc(imgOf(p)) + '" alt=""></td><td><a href="#/p/' + p.id + '"><b>' + esc(p.title) + '</b></a><div class="small mute">' + catOf(p.cat).he + '</div></td>' +
-          '<td>' + money(p.price) + '</td><td>' + p.qty + '</td><td><span class="badge ' + (p.status === 'active' ? 'green' : '') + '">' + { active: 'פעילה', hidden: 'מוסתרת', sold: 'נמכרה' }[p.status] + '</span></td>' +
+          '<td>' + money(p.price) + '</td><td>' + p.qty + '</td><td>' + soldOf(p) + '</td><td><span class="badge ' + (p.status === 'active' ? 'green' : '') + '">' + { active: 'פעילה', hidden: 'מוסתרת', sold: 'נמכרה' }[p.status] + '</span></td>' +
           '<td><div class="actions"><a class="btn sm" href="#/dash/edit/' + p.id + '">עריכה</a>' +
           '<button type="button" class="btn sm" data-act="ptoggle" data-id="' + p.id + '">' + (p.status === 'active' ? 'הסתרה' : 'הפעלה') + '</button>' +
           '<button type="button" class="btn sm danger" data-act="pdel" data-id="' + p.id + '">מחיקה</button></div></td></tr>').join('') + '</tbody></table></div>'
@@ -127,7 +127,12 @@ function viewDash(tab, id) {
       '<div class="kpi"><b>' + orders.length + '</b><span>הזמנות' + (newOrders ? ' (' + newOrders + ' חדשות)' : '') + '</span></div>' +
       '<div class="kpi"><b>' + money(revenue) + '</b><span>סך המכירות</span></div>' +
       '<div class="kpi"><b>' + (r.n ? r.avg.toFixed(1) : '–') + '</b><span>דירוג (' + r.n + ' ביקורות)</span></div>' +
-      '<div class="kpi"><b>' + openMsgs + '</b><span>פניות ממתינות</span></div></div>' +
+      '<div class="kpi"><b>' + openMsgs + '</b><span>פניות ממתינות</span></div>' +
+      '<div class="kpi"><b>' + prods.reduce((a, p) => a + soldOf(p), 0) + '</b><span>פריטים שנמכרו</span></div></div>' +
+      (s.verified ? '<p class="note vnote" style="margin-top:16px">' + vMark(s) + ' <span><b>החנות מאומתת.</b> סימון ה־V מופיע ליד שם החנות בכל האתר.</span></p>'
+        : '<p class="note" style="margin-top:16px"><b>החנות עוד לא מאומתת.</b> סימון V ניתן לחנויות עם רישיון עסק בתוקף למכירת בעלי חיים, אחרי שצוות האתר בודק את המסמכים. בגרסה האמיתית תהיה כאן העלאת רישיון.</p>') +
+      (prods.length ? '<div class="sec-head"><h2>הנמכרים ביותר שלי</h2><a href="#/dash/products">לכל המודעות ←</a></div><div class="tscroll"><table class="list"><tbody>' +
+        prods.slice(0, 5).map((p, i) => '<tr><td>' + (i + 1) + '</td><td><a href="#/p/' + p.id + '">' + esc(p.title) + '</a></td><td>' + soldOf(p) + ' נמכרו</td></tr>').join('') + '</tbody></table></div>' : '') +
       (!s.about || (!s.logo && !s.banner) ? '<p class="note" style="margin-top:16px">טיפ: חנות עם לוגו, תמונת נושא ותיאור נראית אמינה יותר. <a href="#/dash/shop">לעיצוב החנות</a></p>' : '') +
       '<div class="sec-head"><h2>הזמנות אחרונות</h2><a href="#/dash/orders">לכל ההזמנות ←</a></div>' +
       (orders.length ? orders.slice(0, 3).map(o => orderHtml(o, true)).join('') : '<div class="empty panel">עוד לא התקבלו הזמנות.</div>');

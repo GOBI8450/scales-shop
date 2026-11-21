@@ -229,3 +229,22 @@ footer button { background: none; border: 0; color: #e3eaf2; cursor: pointer; pa
   .cart-item .end { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; scroll-behavior: auto !important; } }
+
+/* Verified sellers, best sellers, category groups */
+.vmark { display: inline-flex; align-items: center; gap: 5px; vertical-align: middle; flex-shrink: 0; font-size: .8rem; font-weight: 600; color: #124f8d; }
+.vmark i { display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; background: var(--blue); color: #fff; font-style: normal; font-size: .72rem; font-weight: 800; line-height: 1; }
+.vmark.full { background: #e3effb; border: 1px solid #bcd6f1; border-radius: 99px; padding: 2px 10px 2px 4px; font-size: .85rem; }
+.vmark .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+h1 .vmark.full { font-size: .9rem; }
+.card-shop .vmark { margin-inline-start: auto; }
+.note.vnote { background: #e3effb; border-color: #bcd6f1; display: flex; gap: 8px; align-items: center; margin: 12px 0; }
+.badge.best { background: #b3261e; color: #fff; }
+.card-sold { font-size: .82rem; color: #5b6878; }
+.gchips { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 14px; }
+.gchip { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; min-height: 40px; border: 1px solid #cfd6dd; border-radius: 99px; background: #fff; color: #1d2733; font-weight: 600; font-size: .92rem; }
+.gchip span { color: #5b6878; font-weight: 500; }
+.gchip:hover { border-color: var(--blue); color: var(--blue); }
+.gchip.on { background: #1d2733; border-color: #1d2733; color: #fff; }
+.gchip.on span { color: #d5dce3; }
+.ghead { margin: 20px 0 10px; font-size: 1.15rem; display: flex; gap: 8px; align-items: baseline; }
+.ghead span { color: #5b6878; font-weight: 500; font-size: .9rem; }

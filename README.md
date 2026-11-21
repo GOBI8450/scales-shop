@@ -17,10 +17,12 @@ Then open http://localhost:8080. Without Node, double-clicking `index.html` also
 
 **Buyers**
 - Home page with categories, new listings, deals, private-breeder listings and top shops
-- Search and browse with filters: category, species, sex, price range, region, seller type, deals; three sort orders
+- Search and browse with filters: category, species, sex, price range, region, seller type, deals, verified sellers only; group chips (snakes, geckos, terrariums…) and five sort orders: best-selling (default), newest, price up, price down, by group
 - Listing page with gallery, traits, a price-comparison table of every other seller offering the same species or product, and a question form to the seller
 - Favorites, cart grouped by seller, checkout with pickup or delivery per seller (no real payment), order history
-- Shop pages with banner, logo, listings, reviews and an "about" tab; logged-in buyers can write a review
+- Shop pages with banner, logo, listings (best-selling first, with group chips and sorting), reviews and an "about" tab; logged-in buyers can write a review
+- Best-seller badges, "sold" counts on every listing and a best-sellers row on the home page
+- A blue V mark next to verified sellers (big stores with a licence); unverified sellers show no mark
 
 **Sellers (shops and private breeders)**
 - Registration that opens a shop in one step
@@ -42,10 +44,10 @@ Then open http://localhost:8080. Without Node, double-clicking `index.html` also
 |------|------------|
 | `index.html` | Page shell |
 | `css/styles.css` | All styling |
-| `js/data.js` | Categories, species, supplies, shop templates and `seed()`, which builds the demo database |
+| `js/data.js` | Categories, species, supplies, shop templates (`v: 1` = verified) and `seed()`, which builds the demo database: about 240 listings, each with its own photo, plus invented sales and past orders |
 | `js/app.js` | Storage, hash routing, header and footer, and the buyer pages |
 | `js/dash.js` | Seller dashboard, image upload and site admin |
-| `js/credits.js` | Authors and licenses of the photos in `img/` |
+| `js/credits.js` | `PHOTOS` (photo pools per species or product) and `CREDITS` (author and license of every file in `img/`) |
 | `tools/serve.mjs` | The static server behind `npm start` |
 | `tools/accounts.mjs` | `npm run accounts` regenerates `DEMO-ACCOUNTS.md` from the seed data |
 
