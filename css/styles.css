@@ -443,3 +443,23 @@ fieldset { min-width: 0; }
   .ggrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .guide-main { padding: 16px; }
 }
+
+/* v7: verified sellers, best sellers, group chips */
+.vbadge { display: inline-flex; align-items: center; gap: 4px; vertical-align: middle; flex-shrink: 0; }
+.vbadge .ico { width: 18px; height: 18px; padding: 3px; border-radius: 50%; background: #1A6FD8; stroke: #fff; stroke-width: 3.2; fill: none; }
+.vbadge.full { background: #E8F1FC; color: #134F9C; border: 1px solid #BFD6F3; border-radius: 999px; padding: 1px 10px 1px 4px; font-size: .82rem; font-weight: 700; line-height: 1.6; }
+h1 .vbadge.full { font-size: .9rem; }
+.pshop .vbadge .ico { width: 16px; height: 16px; padding: 2.5px; }
+.badge.best { background: #B3261E; color: #fff; border-color: #8C1D17; }
+.psold { color: var(--muted); font-size: .82rem; }
+.gchips { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 14px; }
+.gchip { font: inherit; font-size: .92rem; font-weight: 600; padding: 6px 12px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--fg); cursor: pointer; min-height: 40px; }
+.gchip span { color: var(--muted); font-weight: 500; }
+.gchip:hover { border-color: var(--brand); }
+.gchip.on { background: var(--brand); border-color: var(--brand); color: #fff; }
+.gchip.on span { color: #DDEFE4; }
+.ghead { font-size: 1.1rem; margin: 18px 0 10px; display: flex; gap: 8px; align-items: baseline; }
+.ghead span { color: var(--muted); font-weight: 500; font-size: .9rem; }
+.note.ok { background: #E8F1FC; border-color: #BFD6F3; color: #123F7A; display: flex; gap: 8px; align-items: flex-start; }
+.note.ok > .ico { width: 20px; height: 20px; flex-shrink: 0; stroke: #1A6FD8; }
+.filters .vbadge .ico { width: 16px; height: 16px; padding: 2.5px; }
