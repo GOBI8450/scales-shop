@@ -348,16 +348,20 @@ function productCard(p) {
   const c = catById(p.cat);
   const sex = p.kind === "animal" && p.sex && p.sex !== "לא ידוע" ? (p.sex === "זכר" ? `<span class="sex m" title="זכר">♂</span>` : `<span class="sex f" title="נקבה">♀</span>`) : "";
   const traits = p.kind === "animal" ? `${sex}${p.morph ? `<span class="chip morph">${esc(p.morph)}</span>` : ""}${p.age ? `<span class="chip">${esc(p.age)}</span>` : ""}` : `<span class="chip">${esc(c.name)}</span>`;
+  const meta = p.kind === "animal" ? `${sex}${p.age ? `<span>${esc(p.age)}</span>` : ""}${p.morph ? `<span>${esc(p.morph)}</span>` : ""}` : `<span>${esc(c.name)}</span>`;
   return `<article class="pcard">
-    <a class="pimg" href="#product-${p.id}" style="${pimgStyle(p)}" aria-label="${esc(p.title)}">${pimgInner(p)}${isBest(p) ? '<span class="badge best">רב מכר</span>' : isNew(p) ? '<span class="badge new">חדש</span>' : ""}</a>
+    <a class="pimg" href="#product-${p.id}" style="${pimgStyle(p)}" aria-label="${esc(p.title)}">${pimgInner(p)}${s.verified ? `<span class="vshield" title="מוכר מאומת">${icon("check")}</span>` : ""}${isBest(p) ? '<span class="badge best">רב מכר</span>' : isNew(p) ? '<span class="badge new">חדש</span>' : ""}${soldOf(p) ? `<span class="psoldpill" title="נמכרו ${soldOf(p)}">${icon("cart")}${soldOf(p)}</span>` : ""}</a>
     <div class="pbody">
       <a class="ptitle" href="#product-${p.id}">${esc(p.title)}</a>
-      <div class="ptraits">${traits}</div>
-      <div class="price-row"><span class="price">${money(p.price)}</span><span class="pship">${icon("truck")}${shipOf(s) ? money(shipOf(s)) : "חינם"}</span></div>
-      ${soldOf(p) ? `<div class="psold">נמכרו ${soldOf(p)}</div>` : ""}
-      <a class="pshop" href="#shop-${s.slug}">${shopDot(s)}<span>${esc(s.name)} · ${esc(s.region || s.city || "ישראל")}</span>${vBadge(s)}</a>
+      <div class="prow">
+        <div class="pleft">
+          <a class="pshop" href="#shop-${s.slug}"><span>${esc(s.name)}</span>${vBadge(s)}</a>
+          <div class="pmeta">${meta}</div>
+        </div>
+        <span class="price">${money(p.price)}</span>
+      </div>
+      <div class="pship">${shipOf(s) ? "משלוח " + money(shipOf(s)) : "משלוח חינם"}${soldOf(p) ? `<span class="psold">· נמכרו ${soldOf(p)}</span>` : ""}</div>
     </div>
-    <div class="pfoot"><button class="btn btn-ghost btn-sm" data-act="add" data-id="${p.id}" ${p.stock < 1 ? "disabled" : ""}>${p.stock < 1 ? "אזל" : "הוספה לעגלה"}</button></div>
   </article>`;
 }
 function shopCard(s) {
@@ -387,7 +391,7 @@ function header(route) {
   const size = document.documentElement.dataset.size || "m";
   return `<header class="topbar"><div class="wrap">
     <a class="brand" href="#home" aria-label="Scales, לעמוד הבית">
-      <span class="brand-mark"><svg width="28" height="28" viewBox="0 0 32 32" aria-hidden="true"><path d="M6 22c0-7 5-13 12-13 4 0 8 2 8 6 0 3-3 4-5 4-3 0-4 2-4 4 0 3-3 4-6 4-3 0-5-2-5-5z" fill="#fff"/><circle cx="21" cy="13" r="1.6" fill="#13795B"/><path d="M9 21c2 0 3-1 4-2M11 25c2 0 3-1 4-2" stroke="#13795B" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg></span>
+      <span class="brand-mark"><svg width="28" height="28" viewBox="0 0 32 32" aria-hidden="true"><path d="M6 22c0-7 5-13 12-13 4 0 8 2 8 6 0 3-3 4-5 4-3 0-4 2-4 4 0 3-3 4-6 4-3 0-5-2-5-5z" fill="#fff"/><circle cx="21" cy="13" r="1.6" fill="#111"/><path d="M9 21c2 0 3-1 4-2M11 25c2 0 3-1 4-2" stroke="#111" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg></span>
       <span class="brand-name">Scales<small>כל מוכרי הזוחלים במקום אחד</small></span>
     </a>
     <form class="search" id="searchForm" role="search">
@@ -402,8 +406,8 @@ function header(route) {
         <button data-act="size" data-v="l" aria-pressed="${size === "l"}" title="טקסט גדול" style="font-size:1.15em">א</button>
         <button data-act="size" data-v="xl" aria-pressed="${size === "xl"}" title="טקסט גדול מאוד" style="font-size:1.35em">א</button>
       </div>
-      <a class="hbtn sell" href="#open-shop">${icon("store")}<span class="lbl-hide">מכירה באתר</span></a>
-      ${u ? `<a class="hbtn" href="#account">${icon("user")}<span class="lbl-hide">${esc(u.name.split(" ")[0])}</span></a>` : `<a class="hbtn" href="#login">${icon("user")}<span class="lbl-hide">כניסה</span></a>`}
+      <a class="pill pill-dark" href="#open-shop">מכירה באתר</a>
+      ${u ? `<a class="hbtn" href="#account">${icon("user")}<span class="lbl-hide">${esc(u.name.split(" ")[0])}</span></a>` : `<a class="pill pill-line" href="#login">כניסה</a>`}
       ${u && u.shopId ? `<a class="hbtn" href="#dashboard">${icon("store")}<span class="lbl-hide">החנות שלי</span></a>` : ""}
       <a class="hbtn" href="#saved" aria-label="התראות, ${alertCount()} חדשות">${icon("bell")}<span class="lbl-hide">התראות</span>${alertCount() ? `<span class="count">${alertCount()}</span>` : ""}</a>
       <a class="hbtn" href="#cart" aria-label="עגלה, ${cartCount()} פריטים">${icon("cart")}<span class="lbl-hide">עגלה</span><span class="count">${cartCount()}</span></a>
@@ -453,19 +457,17 @@ function viewHome() {
   const animals = db.products.filter(p => p.kind === "animal").sort((a, b) => (b.image ? 1 : 0) - (a.image ? 1 : 0) || b.createdAt - a.createdAt).slice(0, 10);
   const best = [...db.products].sort(SORTS.best[1]).filter((p, i, a) => a.findIndex(x => x.title === p.title) === i).slice(0, 10); // one card per product type
   const ordered = shopOrder();
+  const heroPic = db.products.filter(p => p.kind === "animal" && p.image && p.image.includes("/ball-")).sort(SORTS.best[1])[0];
   return `
-  <section class="intro">
-    <div>
+  <section class="mmhero">
+    ${heroPic ? `<div class="mmhero-pic" style="background-image:url('${heroPic.image}')" role="img" aria-label="${esc(heroPic.title)}"></div>` : ""}
+    <div class="mmhero-text">
       <h1>קונים ומוכרים זוחלים בישראל</h1>
-      <p>כל החנויות והמגדלים הפרטיים במקום אחד. מחפשים לפי מין, מורף, מחיר ואזור, ומזמינים ישירות מהמוכר.</p>
-      <div class="quick"><span>חיפושים נפוצים:</span>${["שממית נמרית", "פיתון מלכותי", "חרדון מזוקן", "שממית מצויצת", "טרנטולה", "מזון חי", "נורת UVB"].map(q => `<a href="#search" data-act="quick" data-q="${q}">${q}</a>`).join("")}</div>
-    </div>
-    <div class="intro-stats">
-      <div>${db.products.filter(p => p.kind === "animal").length}<small>בעלי חיים</small></div>
-      <div>${db.products.filter(p => p.kind === "supply").length}<small>מוצרי ציוד</small></div>
-      <div>${db.shops.length}<small>מוכרים</small></div>
+      <p>כל החנויות והמגדלים הפרטיים במקום אחד. ${db.products.filter(p => p.kind === "animal").length} בעלי חיים ו־${db.products.filter(p => p.kind === "supply").length} מוצרי ציוד מ־${db.shops.length} מוכרים.</p>
+      <div class="btn-row"><a class="btn btn-white" href="#new">לכל המודעות</a><a class="btn btn-outline-white" href="#open-shop">פתיחת חנות</a></div>
     </div>
   </section>
+  <div class="quick"><span>חיפושים נפוצים:</span>${["שממית נמרית", "פיתון מלכותי", "חרדון מזוקן", "שממית מצויצת", "טרנטולה", "מזון חי", "נורת UVB"].map(q => `<a href="#search" data-act="quick" data-q="${q}">${q}</a>`).join("")}</div>
 
   <section class="tools-row" aria-label="כלים למגדלים">
     <a href="#genetics">${icon("dna")}<span><b>מחשבון גנטיקה</b><small>מה ייצא מהזיווג? אחוזים לכל מורף</small></span></a>
